@@ -8,11 +8,15 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>MJ Player — Last.fm Radio & Scrobbler</title>
   
-  <link id="pwa-manifest" rel="manifest" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="icon-192.png" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Подключаем FontAwesome для точного отображения значка "as" как в первом приложении -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
     body {
@@ -90,7 +94,7 @@
 <body class="flex flex-col h-screen select-none">
 
   <div id="file-warning" class="hidden bg-amber-600 text-white text-xs px-4 py-2 text-center font-medium z-50">
-    Внимание: файл открыт с диска (file://). Для работы YouTube запустите локальный сервер (http://localhost:8000) или выложите на хостинг.
+    Внимание: файл открыт с диска (file://). Для работы YouTube запустите локальный сервер (http://localhost:8000) или откройте на GitHub Pages.
   </div>
 
   <div class="flex flex-1 overflow-hidden">
@@ -99,8 +103,9 @@
     <aside class="hidden md:flex flex-col w-64 bg-black p-6 border-r border-neutral-900 justify-between">
       <div>
         <div class="flex items-center gap-3 mb-8">
-          <div class="w-10 h-10 rounded-full bg-[#1db954] flex items-center justify-center text-black font-bold text-xl">
-            <i data-lucide="disc-3" class="w-6 h-6"></i>
+          <!-- Тот самый фирменный значок из первого приложения -->
+          <div class="w-10 h-10 rounded-full bg-[#1db954] flex items-center justify-center text-black shadow-lg shrink-0">
+            <i class="fa-brands fa-lastfm text-xl"></i>
           </div>
           <div>
             <h1 class="font-bold text-lg tracking-tight">MJ Player</h1>
@@ -141,7 +146,10 @@
     <main class="flex-1 overflow-y-auto bg-gradient-to-b from-neutral-900 via-[#121212] to-[#121212] p-4 md:p-8 pb-32">
       
       <header class="flex items-center justify-between mb-6">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2.5">
+          <div class="md:hidden w-8 h-8 rounded-full bg-[#1db954] flex items-center justify-center text-black shrink-0">
+            <i class="fa-brands fa-lastfm text-base"></i>
+          </div>
           <span class="px-2.5 py-1 rounded-full bg-neutral-800/90 text-[11px] font-bold tracking-wider uppercase text-neutral-300 border border-neutral-700/50">
             Профиль: <span id="display-username" class="text-white">Не задан</span>
           </span>
@@ -327,7 +335,7 @@
 
   <!-- Модальное окно настроек API -->
   <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-lg font-bold">Настройки доступа</h3>
         <button onclick="closeSettingsModal()" class="text-neutral-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -353,6 +361,14 @@
           <input id="set-ytkey" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
         </div>
         <button onclick="saveSettings()" class="w-full mt-2 py-2.5 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-bold transition">Сохранить в память устройства</button>
+
+        <div class="pt-3 mt-3 border-t border-neutral-800">
+          <p class="text-[11px] text-neutral-400 mb-2">Для сборки APK в PWABuilder (нажмите для скачивания иконки со значком):</p>
+          <div class="flex gap-2">
+            <button onclick="downloadPngIcon(192)" class="flex-1 py-2 px-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium transition">Скачать icon-192.png</button>
+            <button onclick="downloadPngIcon(512)" class="flex-1 py-2 px-2 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium transition">Скачать icon-512.png</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -371,35 +387,37 @@
   </div>
 
   <script>
-    // --- Генерация PWA Manifest ---
-    (function setupPwaManifest() {
-      const manifest = {
-        name: "MJ Player — Last.fm Radio",
-        short_name: "MJ Player",
-        description: "Персональное радио и скробблер Last.fm",
-        start_url: window.location.href,
-        display: "standalone",
-        background_color: "#121212",
-        theme_color: "#1db954",
-        orientation: "portrait-primary",
-        icons: [
-          {
-            src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231db954'/%3E%3Ccircle cx='256' cy='256' r='150' fill='none' stroke='%23121212' stroke-width='36'/%3E%3Ccircle cx='256' cy='256' r='45' fill='%23121212'/%3E%3C/svg%3E",
-            sizes: "512x512",
-            type: "image/svg+xml",
-            purpose: "any maskable"
-          }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-      document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
-    })();
+    if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
 
     if (window.location.protocol === 'file:') {
       document.getElementById('file-warning').classList.remove('hidden');
     }
 
-    // --- Безопасная конфигурация (без зашитых ключей в коде) ---
+    // Генератор иконок с точным шрифтовым логотипом Last.fm
+    function downloadPngIcon(size) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#1db954';
+      ctx.fillRect(0, 0, size, size);
+
+      ctx.fillStyle = '#000000';
+      ctx.font = `900 ${size * 0.45}px 'Inter', sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('as', size / 2, size / 2);
+
+      const link = document.createElement('a');
+      link.download = `icon-${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // --- Конфигурация ---
     const DEFAULT_CONFIG = {
       username: '',
       apiKey: '',
@@ -1058,7 +1076,6 @@
       lucide.createIcons();
     }
 
-    // --- Модальные окна ---
     function openAuthModal() {
       document.getElementById('lfm-login-user').value = config.username;
       document.getElementById('auth-modal').classList.remove('hidden');
