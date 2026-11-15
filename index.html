@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#121212" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>MJ Player — Last.fm Radio & Scrobbler</title>
+  
+  <link id="pwa-manifest" rel="manifest" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-md5/2.19.0/js/md5.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #121212;
+      color: #ffffff;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #121212; }
+    ::-webkit-scrollbar-thumb { background: #282828; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3e3e3e; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 4px;
+      border-radius: 2px;
+      background: #4d4d4d;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      margin-top: -4px;
+      background-color: #ffffff;
+      height: 12px;
+      width: 12px;
+      border-radius: 50%;
+    }
+    input[type="range"]:hover::-webkit-slider-thumb {
+      background-color: #1db954;
+    }
+
+    .yt-hidden {
+      position: fixed;
+      bottom: -9999px;
+      left: -9999px;
+      width: 2px;
+      height: 2px;
+      opacity: 0.01;
+      pointer-events: none;
+    }
+    .yt-visible {
+      position: fixed;
+      bottom: 100px;
+      right: 16px;
+      width: 280px;
+      height: 158px;
+      z-index: 40;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
+      border: 1px solid #282828;
+    }
+
+    @keyframes pulse-eq {
+      0%, 100% { height: 4px; }
+      50% { height: 14px; }
+    }
+    .eq-bar {
+      width: 3px;
+      background-color: #1db954;
+      border-radius: 1px;
+      animation: pulse-eq 0.8s infinite ease-in-out;
+    }
+    .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+    .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+  </style>
+</head>
+<body class="flex flex-col h-screen select-none">
+
+  <div id="file-warning" class="hidden bg-amber-600 text-white text-xs px-4 py-2 text-center font-medium z-50">
+    Внимание: файл открыт с диска (file://). Для работы YouTube запустите локальный сервер (http://localhost:8000) или выложите на хостинг.
+  </div>
+
+  <div class="flex flex-1 overflow-hidden">
+    
+    <!-- Боковая панель (Десктоп) -->
+    <aside class="hidden md:flex flex-col w-64 bg-black p-6 border-r border-neutral-900 justify-between">
+      <div>
+        <div class="flex items-center gap-3 mb-8">
+          <div class="w-10 h-10 rounded-full bg-[#1db954] flex items-center justify-center text-black font-bold text-xl">
+            <i data-lucide="disc-3" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h1 class="font-bold text-lg tracking-tight">MJ Player</h1>
+            <p class="text-xs text-neutral-400">Last.fm Audio Engine</p>
+          </div>
+        </div>
+
+        <p class="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-3">Радиостанции</p>
+        <nav class="space-y-1">
+          <button onclick="startStation('library')" id="nav-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-900 transition">
+            <i data-lucide="library" class="w-4 h-4 text-[#1db954]"></i> Play Your Library
+          </button>
+          <button onclick="startStation('mix')" id="nav-mix" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-900 transition">
+            <i data-lucide="shuffle" class="w-4 h-4 text-purple-400"></i> Play Your Mix
+          </button>
+          <button onclick="startStation('recs')" id="nav-recs" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-900 transition">
+            <i data-lucide="sparkles" class="w-4 h-4 text-rose-400"></i> Recommendations
+          </button>
+        </nav>
+      </div>
+
+      <!-- Статус скробблера -->
+      <div class="bg-neutral-900/80 p-4 rounded-xl border border-neutral-800">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-neutral-300">Last.fm Scrobbler</span>
+          <span id="scrobble-dot" class="w-2 h-2 rounded-full bg-neutral-600"></span>
+        </div>
+        <p id="scrobble-status-text" class="text-[11px] text-neutral-400 mb-3 leading-relaxed">
+          Авторизуйтесь, чтобы треки записывались в профиль.
+        </p>
+        <button id="auth-btn-sidebar" onclick="openAuthModal()" class="w-full py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-semibold transition flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Войти в Last.fm
+        </button>
+      </div>
+    </aside>
+
+    <!-- Главная область -->
+    <main class="flex-1 overflow-y-auto bg-gradient-to-b from-neutral-900 via-[#121212] to-[#121212] p-4 md:p-8 pb-32">
+      
+      <header class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-1 rounded-full bg-neutral-800/90 text-[11px] font-bold tracking-wider uppercase text-neutral-300 border border-neutral-700/50">
+            Профиль: <span id="display-username" class="text-white">Не задан</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="auth-btn-mobile" onclick="openAuthModal()" class="md:hidden px-3 py-1.5 rounded-full bg-neutral-800 text-xs font-semibold flex items-center gap-1.5">
+            <span id="mobile-dot" class="w-2 h-2 rounded-full bg-neutral-500"></span>
+            <span id="mobile-auth-label">Войти</span>
+          </button>
+          <button onclick="openSettingsModal()" class="p-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-white transition" title="Настройки API">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </header>
+
+      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-5">Персональное радио</h2>
+
+      <!-- 3 Главные карточки -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
+        <button onclick="startStation('library')" id="card-library" class="group text-left p-4 rounded-xl bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/40 transition flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-[#1db954] text-black flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition">
+            <i data-lucide="play" class="w-6 h-6 fill-current"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="font-bold text-base truncate">Play your library</div>
+            <div class="text-xs text-neutral-400 truncate">Твои топ-треки и история</div>
+          </div>
+        </button>
+
+        <button onclick="startStation('mix')" id="card-mix" class="group text-left p-4 rounded-xl bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/40 transition flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition">
+            <i data-lucide="shuffle" class="w-6 h-6"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="font-bold text-base truncate">Play your mix</div>
+            <div class="text-xs text-neutral-400 truncate">50% библиотека + 50% похожее</div>
+          </div>
+        </button>
+
+        <button onclick="startStation('recs')" id="card-recs" class="group text-left p-4 rounded-xl bg-neutral-800/60 hover:bg-neutral-800 border border-neutral-700/40 transition flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-lg group-hover:scale-105 transition">
+            <i data-lucide="wand-2" class="w-6 h-6"></i>
+          </div>
+          <div class="min-w-0">
+            <div class="font-bold text-base truncate">Recommendations</div>
+            <div class="text-xs text-neutral-400 truncate">Новые открытия по вкусу</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Заголовок очереди -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div class="flex items-center gap-2">
+          <h3 id="queue-title" class="text-lg font-bold">Очередь воспроизведения</h3>
+          <span id="queue-count" class="px-2 py-0.5 rounded-full bg-neutral-800 text-xs text-neutral-400">0 треков</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="promptManualUrl()" class="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-medium text-neutral-200 flex items-center gap-1.5 transition">
+            <i data-lucide="youtube" class="w-3.5 h-3.5 text-red-500"></i> <span class="hidden sm:inline">Задать YouTube URL</span><span class="sm:hidden">URL</span>
+          </button>
+          <button onclick="shuffleQueue()" class="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-medium text-neutral-200 flex items-center gap-1.5 transition">
+            <i data-lucide="shuffle" class="w-3.5 h-3.5"></i> Перемешать
+          </button>
+        </div>
+      </div>
+
+      <!-- Список треков -->
+      <div id="track-list" class="space-y-1">
+        <div class="text-center py-12 text-neutral-500 text-sm">
+          Выберите одну из трех радиостанций выше, чтобы начать прослушивание.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Нижний плеер -->
+  <footer class="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-neutral-800/90 px-3 md:px-6 py-2.5 md:py-3 z-30">
+    <div class="max-w-screen-2xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
+      
+      <div class="flex items-center justify-between w-full md:w-1/3 min-w-0">
+        <div class="flex items-center gap-3 min-w-0">
+          <img id="player-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E" alt="Cover" class="w-11 h-11 md:w-12 md:h-12 rounded-md bg-neutral-800 object-cover shrink-0" />
+          <div class="min-w-0">
+            <div id="player-title" class="text-sm font-semibold text-white truncate">Не выбрано</div>
+            <div id="player-artist" class="text-xs text-neutral-400 truncate">Нажмите на радиостанцию</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button id="love-btn" onclick="toggleLoveTrack()" class="p-2 text-neutral-400 hover:text-white transition" title="Добавить в любимые Last.fm">
+            <i data-lucide="heart" class="w-4 h-4"></i>
+          </button>
+          <button onclick="toggleVideoVisibility()" class="md:hidden p-2 text-neutral-400 hover:text-white transition" title="Показать/скрыть видео">
+            <i id="video-icon-mobile" data-lucide="eye-off" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center w-full md:w-1/3">
+        <div class="flex items-center gap-5 mb-1">
+          <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Перемешать">
+            <i data-lucide="shuffle" class="w-4 h-4"></i>
+          </button>
+          <button onclick="prevTrack()" class="text-neutral-300 hover:text-white transition" title="Предыдущий">
+            <i data-lucide="skip-back" class="w-5 h-5 fill-current"></i>
+          </button>
+          <button id="play-pause-btn" onclick="togglePlay()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow">
+            <i id="play-pause-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+          </button>
+          <button onclick="nextTrack()" class="text-neutral-300 hover:text-white transition" title="Следующий">
+            <i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i>
+          </button>
+          <button id="repeat-btn" onclick="toggleRepeat()" class="text-neutral-400 hover:text-white transition" title="Повтор трека">
+            <i data-lucide="repeat" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="flex items-center gap-2 w-full max-w-md">
+          <span id="time-current" class="text-[10px] text-neutral-400 w-8 text-right">0:00</span>
+          <input id="progress-bar" type="range" min="0" max="100" value="0" oninput="seekTo(this.value)" class="flex-1 h-1" />
+          <span id="time-total" class="text-[10px] text-neutral-400 w-8">0:00</span>
+        </div>
+      </div>
+
+      <div class="hidden md:flex items-center justify-end gap-3 w-1/3">
+        <span id="search-badge" class="hidden px-2.5 py-1 rounded-full bg-neutral-800 text-[11px] text-neutral-300 items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-[#1db954] animate-ping"></span>
+          <span id="search-badge-text">Поиск...</span>
+        </span>
+        <button onclick="toggleVideoVisibility()" class="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 flex items-center gap-1.5 transition">
+          <i id="video-icon-desktop" data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+          <span id="video-label">Аудио</span>
+        </button>
+        <div class="flex items-center gap-2 w-28">
+          <button onclick="toggleMute()" class="text-neutral-400 hover:text-white">
+            <i id="volume-icon" data-lucide="volume-2" class="w-4 h-4"></i>
+          </button>
+          <input id="volume-slider" type="range" min="0" max="100" value="80" oninput="setVolume(this.value)" class="w-full" />
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Контейнер YouTube IFrame -->
+  <div id="yt-wrapper" class="yt-hidden">
+    <div id="yt-player"></div>
+  </div>
+
+  <!-- Всплывающее уведомление -->
+  <div id="toast" class="fixed top-4 right-4 max-w-sm bg-neutral-900 border border-neutral-700 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2.5 z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-10px]">
+    <i data-lucide="info" class="w-4 h-4 text-[#1db954] shrink-0"></i>
+    <span id="toast-text">Уведомление</span>
+  </div>
+
+  <!-- Модальное окно авторизации Last.fm -->
+  <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold">Подключение Last.fm</h3>
+        <button onclick="closeAuthModal()" class="text-neutral-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <div class="space-y-4 text-xs text-neutral-300">
+        <div class="p-3.5 rounded-xl bg-neutral-800/70 border border-neutral-700/50">
+          <p class="font-semibold text-white mb-2">Способ 1: Через браузер (рекомендуется)</p>
+          <p class="text-neutral-400 mb-3">Откроется официальная страница Last.fm. Нажмите «Allow access», затем вернитесь сюда и нажмите кнопку подтверждения.</p>
+          <div class="flex gap-2">
+            <button onclick="startWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#d51007] hover:bg-[#b80d06] text-white font-semibold transition">1. Открыть Last.fm</button>
+            <button onclick="completeWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-semibold transition">2. Я разрешил</button>
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-xl bg-neutral-800/70 border border-neutral-700/50">
+          <p class="font-semibold text-white mb-2">Способ 2: Прямой вход по паролю</p>
+          <input id="lfm-login-user" type="text" placeholder="Логин Last.fm" class="w-full mb-2 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
+          <input id="lfm-login-pass" type="password" placeholder="Пароль" class="w-full mb-3 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
+          <button onclick="mobileAuth()" class="w-full py-2 px-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white font-semibold transition">Войти и получить сессию</button>
+        </div>
+
+        <button id="logout-btn" onclick="logoutLastFm()" class="hidden w-full py-2 text-rose-400 hover:text-rose-300 font-semibold">Отключить текущий аккаунт</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно настроек API -->
+  <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold">Настройки доступа</h3>
+        <button onclick="closeSettingsModal()" class="text-neutral-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p class="text-[11px] text-neutral-400 mb-4 leading-relaxed">
+        Ключи сохраняются исключительно в локальной памяти (localStorage) вашего устройства и не передаются третьим лицам.
+      </p>
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-neutral-400 mb-1">Пользователь Last.fm</label>
+          <input id="set-username" type="text" placeholder="Например: artesDj" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+        </div>
+        <div>
+          <label class="block text-neutral-400 mb-1">Last.fm API Key <span class="text-rose-400">*</span></label>
+          <input id="set-apikey" type="password" placeholder="Вставьте ваш API Key" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+        </div>
+        <div>
+          <label class="block text-neutral-400 mb-1">Last.fm Shared Secret (для скробблинга)</label>
+          <input id="set-secret" type="password" placeholder="Вставьте ваш Shared Secret" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+        </div>
+        <div>
+          <label class="block text-neutral-400 mb-1">YouTube Data API v3 Key (опционально)</label>
+          <input id="set-ytkey" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+        </div>
+        <button onclick="saveSettings()" class="w-full mt-2 py-2.5 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-bold transition">Сохранить в память устройства</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно ручного ввода YouTube URL -->
+  <div id="manual-url-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6">
+      <h3 class="text-base font-bold mb-2">Вставить ссылку на YouTube</h3>
+      <p class="text-xs text-neutral-400 mb-3">Если трек не нашелся автоматически, вставьте ссылку на видео с YouTube:</p>
+      <input id="manual-yt-input" type="text" placeholder="https://www.youtube.com/watch?v=..." class="w-full mb-4 px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-xs text-white" />
+      <div class="flex gap-2">
+        <button onclick="closeManualUrlModal()" class="flex-1 py-2 rounded-lg bg-neutral-800 text-xs font-semibold">Отмена</button>
+        <button onclick="applyManualUrl()" class="flex-1 py-2 rounded-lg bg-[#1db954] text-black text-xs font-bold">Запустить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Генерация PWA Manifest ---
+    (function setupPwaManifest() {
+      const manifest = {
+        name: "MJ Player — Last.fm Radio",
+        short_name: "MJ Player",
+        description: "Персональное радио и скробблер Last.fm",
+        start_url: window.location.href,
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#1db954",
+        orientation: "portrait-primary",
+        icons: [
+          {
+            src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%231db954'/%3E%3Ccircle cx='256' cy='256' r='150' fill='none' stroke='%23121212' stroke-width='36'/%3E%3Ccircle cx='256' cy='256' r='45' fill='%23121212'/%3E%3C/svg%3E",
+            sizes: "512x512",
+            type: "image/svg+xml",
+            purpose: "any maskable"
+          }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+      document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(blob));
+    })();
+
+    if (window.location.protocol === 'file:') {
+      document.getElementById('file-warning').classList.remove('hidden');
+    }
+
+    // --- Безопасная конфигурация (без зашитых ключей в коде) ---
+    const DEFAULT_CONFIG = {
+      username: '',
+      apiKey: '',
+      secret: '',
+      ytKey: '',
+      sessionKey: '',
+      sessionUser: ''
+    };
+
+    let config = { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem('mj_player_cfg') || '{}') };
+    let queue = [];
+    let currentIndex = -1;
+    let ytPlayer = null;
+    let ytReady = false;
+    let isPlaying = false;
+    let isRepeat = false;
+    let videoVisible = false;
+    let progressInterval = null;
+    let scrobbledCurrent = false;
+    let trackStartTime = 0;
+    let pendingAuthToken = '';
+    let ytCache = JSON.parse(localStorage.getItem('mj_yt_cache') || '{}');
+
+    lucide.createIcons();
+    updateAuthUI();
+
+    if (!config.apiKey || !config.username) {
+      setTimeout(() => {
+        openSettingsModal();
+        showToast('Введите ваш логин и API Key Last.fm для начала работы');
+      }, 400);
+    }
+
+    // --- YouTube IFrame API ---
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+
+    window.onYouTubeIframeAPIReady = function() {
+      const playerVars = {
+        autoplay: 1,
+        controls: 0,
+        disablekb: 1,
+        fs: 0,
+        modestbranding: 1,
+        rel: 0,
+        playsinline: 1
+      };
+      if (window.location.origin && window.location.origin !== 'null' && !window.location.origin.startsWith('file')) {
+        playerVars.origin = window.location.origin;
+      }
+
+      ytPlayer = new YT.Player('yt-player', {
+        height: '100%',
+        width: '100%',
+        playerVars,
+        events: {
+          onReady: (e) => {
+            ytReady = true;
+            e.target.setVolume(document.getElementById('volume-slider').value);
+          },
+          onStateChange: onPlayerStateChange,
+          onError: (e) => {
+            if (e.data === 153 || e.data === 150 || e.data === 101) {
+              showToast('Видео ограничено для встраивания. Пропуск трека...');
+            } else {
+              showToast('Ошибка воспроизведения. Переключаю дальше...');
+            }
+            setTimeout(() => nextTrack(), 1500);
+          }
+        }
+      });
+    };
+
+    function onPlayerStateChange(event) {
+      if (event.data === YT.PlayerState.PLAYING) {
+        isPlaying = true;
+        updatePlayPauseIcon();
+        startProgressTimer();
+      } else if (event.data === YT.PlayerState.PAUSED) {
+        isPlaying = false;
+        updatePlayPauseIcon();
+        stopProgressTimer();
+      } else if (event.data === YT.PlayerState.ENDED) {
+        if (isRepeat) {
+          ytPlayer.seekTo(0);
+          ytPlayer.playVideo();
+        } else {
+          nextTrack();
+        }
+      }
+    }
+
+    // --- Last.fm API Helper ---
+    async function lfmCall(params, isPost = false) {
+      if (!config.apiKey) {
+        openSettingsModal();
+        throw new Error('API Key не задан');
+      }
+      const allParams = {
+        ...params,
+        api_key: config.apiKey,
+        format: 'json'
+      };
+
+      if (isPost || params.method === 'auth.getSession' || params.method === 'auth.getMobileSession') {
+        const sigParams = { ...allParams };
+        delete sigParams.format;
+        const keys = Object.keys(sigParams).sort();
+        let sigStr = '';
+        for (const k of keys) {
+          sigStr += k + sigParams[k];
+        }
+        sigStr += config.secret;
+        allParams.api_sig = md5(sigStr);
+      }
+
+      const url = 'https://ws.audioscrobbler.com/2.0/';
+      if (isPost) {
+        const body = new URLSearchParams(allParams);
+        const res = await fetch(url, { method: 'POST', body });
+        return await res.json();
+      } else {
+        const qs = new URLSearchParams(allParams).toString();
+        const res = await fetch(`${url}?${qs}`);
+        return await res.json();
+      }
+    }
+
+    // --- Генерация станций ---
+    async function startStation(type) {
+      if (!config.apiKey || !config.username) {
+        openSettingsModal();
+        showToast('Сначала укажите логин и API Key в настройках');
+        return;
+      }
+
+      ['library', 'mix', 'recs'].forEach(t => {
+        const card = document.getElementById(`card-${t}`);
+        const nav = document.getElementById(`nav-${t}`);
+        if (card) card.classList.remove('ring-2', 'ring-[#1db954]');
+        if (nav) nav.classList.remove('bg-neutral-900', 'text-white');
+      });
+      const activeCard = document.getElementById(`card-${type}`);
+      const activeNav = document.getElementById(`nav-${type}`);
+      if (activeCard) activeCard.classList.add('ring-2', 'ring-[#1db954]');
+      if (activeNav) activeNav.classList.add('bg-neutral-900', 'text-white');
+
+      const titles = {
+        library: `Library Radio • ${config.username}`,
+        mix: `Personal Mix • ${config.username}`,
+        recs: `Recommendations • ${config.username}`
+      };
+      document.getElementById('queue-title').textContent = titles[type];
+      document.getElementById('track-list').innerHTML = `<div class="py-12 text-center text-neutral-400 text-sm animate-pulse">Собираем треки из Last.fm...</div>`;
+
+      try {
+        let tracks = [];
+        if (type === 'library') {
+          const [topRes, recentRes] = await Promise.all([
+            lfmCall({ method: 'user.gettoptracks', user: config.username, limit: 60 }),
+            lfmCall({ method: 'user.getrecenttracks', user: config.username, limit: 40 })
+          ]);
+          const top = (topRes.toptracks?.track || []).map(normalizeTrack);
+          const recent = (recentRes.recenttracks?.track || []).map(normalizeTrack);
+          tracks = deduplicateTracks([...top, ...recent]);
+        } 
+        else if (type === 'recs') {
+          const topArtistsRes = await lfmCall({ method: 'user.gettopartists', user: config.username, limit: 15 });
+          const artists = topArtistsRes.topartists?.artist || [];
+          const picked = shuffleArray(artists).slice(0, 6);
+          const simPromises = picked.map(a => lfmCall({ method: 'artist.getsimilar', artist: a.name, limit: 8 }));
+          const simResults = await Promise.all(simPromises);
+          
+          let simArtists = [];
+          simResults.forEach(r => {
+            if (r.similarartists?.artist) simArtists.push(...r.similarartists.artist);
+          });
+          const pickedSim = shuffleArray(simArtists).slice(0, 10);
+          const trackPromises = pickedSim.map(a => lfmCall({ method: 'artist.gettoptracks', artist: a.name, limit: 5 }));
+          const trackResults = await Promise.all(trackPromises);
+          trackResults.forEach(r => {
+            if (r.toptracks?.track) tracks.push(...r.toptracks.track.map(normalizeTrack));
+          });
+          tracks = deduplicateTracks(tracks);
+        } 
+        else if (type === 'mix') {
+          const [topRes, topArtistsRes] = await Promise.all([
+            lfmCall({ method: 'user.gettoptracks', user: config.username, limit: 40 }),
+            lfmCall({ method: 'user.gettopartists', user: config.username, limit: 12 })
+          ]);
+          const libTracks = shuffleArray((topRes.toptracks?.track || []).map(normalizeTrack)).slice(0, 30);
+          const artists = shuffleArray(topArtistsRes.topartists?.artist || []).slice(0, 5);
+          const simPromises = artists.map(a => lfmCall({ method: 'artist.getsimilar', artist: a.name, limit: 5 }));
+          const simResults = await Promise.all(simPromises);
+          let simArtists = [];
+          simResults.forEach(r => { if (r.similarartists?.artist) simArtists.push(...r.similarartists.artist); });
+          const trackPromises = shuffleArray(simArtists).slice(0, 6).map(a => lfmCall({ method: 'artist.gettoptracks', artist: a.name, limit: 5 }));
+          const trackResults = await Promise.all(trackPromises);
+          let recTracks = [];
+          trackResults.forEach(r => { if (r.toptracks?.track) recTracks.push(...r.toptracks.track.map(normalizeTrack)); });
+          
+          tracks = deduplicateTracks([...libTracks, ...recTracks.slice(0, 30)]);
+        }
+
+        queue = shuffleArray(tracks);
+        renderQueue();
+        if (queue.length > 0) {
+          playTrackAt(0);
+        } else {
+          showToast('Не удалось загрузить треки. Проверьте имя пользователя и API Key.');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Ошибка при обращении к Last.fm API.');
+      }
+    }
+
+    function normalizeTrack(t) {
+      const artist = typeof t.artist === 'string' ? t.artist : (t.artist?.name || t.artist?.['#text'] || 'Unknown');
+      const images = t.image || [];
+      const imgObj = images.find(i => i.size === 'large') || images.find(i => i.size === 'medium') || images[images.length - 1];
+      let cover = imgObj ? imgObj['#text'] : '';
+      if (cover && cover.includes('2a96cbd8b46e442fc41c2b86b821562f')) cover = '';
+      return {
+        title: t.name,
+        artist: artist,
+        cover: cover,
+        url: t.url || ''
+      };
+    }
+
+    function deduplicateTracks(list) {
+      const seen = new Set();
+      return list.filter(t => {
+        const key = `${t.artist.toLowerCase()}-${t.title.toLowerCase()}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function shuffleQueue() {
+      if (queue.length < 2) return;
+      const current = queue[currentIndex];
+      const rest = queue.filter((_, idx) => idx !== currentIndex);
+      queue = current ? [current, ...shuffleArray(rest)] : shuffleArray(rest);
+      currentIndex = current ? 0 : -1;
+      renderQueue();
+      showToast('Очередь перемешана');
+    }
+
+    function renderQueue() {
+      document.getElementById('queue-count').textContent = `${queue.length} треков`;
+      const container = document.getElementById('track-list');
+      container.innerHTML = queue.map((t, idx) => {
+        const isCurrent = idx === currentIndex;
+        const coverHtml = t.cover 
+          ? `<img src="${t.cover}" class="w-10 h-10 rounded object-cover bg-neutral-800 shrink-0" />`
+          : `<div class="w-10 h-10 rounded bg-neutral-800 flex items-center justify-center text-neutral-500 shrink-0"><i data-lucide="music" class="w-4 h-4"></i></div>`;
+
+        return `
+          <div onclick="playTrackAt(${idx})" class="flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${isCurrent ? 'bg-neutral-800/90 text-[#1db954]' : 'hover:bg-neutral-800/40 text-white'}">
+            <div class="w-6 text-center text-xs font-medium ${isCurrent ? 'text-[#1db954]' : 'text-neutral-500'}">
+              ${isCurrent ? '<div class="flex items-end justify-center gap-0.5 h-3.5"><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span></div>' : idx + 1}
+            </div>
+            ${coverHtml}
+            <div class="min-w-0 flex-1">
+              <div class="text-sm font-semibold truncate ${isCurrent ? 'text-[#1db954]' : 'text-white'}">${escapeHtml(t.title)}</div>
+              <div class="text-xs text-neutral-400 truncate">${escapeHtml(t.artist)}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // --- Многоуровневый поиск YouTube ID ---
+    async function findYouTubeId(track) {
+      const cacheKey = `${track.artist.toLowerCase()} - ${track.title.toLowerCase()}`;
+      if (ytCache[cacheKey]) return ytCache[cacheKey];
+
+      const query = `${track.artist} - ${track.title}`;
+
+      if (config.ytKey) {
+        try {
+          const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&q=${encodeURIComponent(query)}&type=video&key=${config.ytKey}`);
+          const data = await res.json();
+          if (data.items && data.items[0]?.id?.videoId) {
+            return saveYtCache(cacheKey, data.items[0].id.videoId);
+          }
+        } catch (e) {}
+      }
+
+      try {
+        const lfmUrl = track.url || `https://www.last.fm/music/${encodeURIComponent(track.artist)}/_/${encodeURIComponent(track.title)}`;
+        const proxies = [
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(lfmUrl)}`,
+          `https://corsproxy.io/?${encodeURIComponent(lfmUrl)}`
+        ];
+        for (const proxyUrl of proxies) {
+          try {
+            const ctrl = new AbortController();
+            const id = setTimeout(() => ctrl.abort(), 4500);
+            const res = await fetch(proxyUrl, { signal: ctrl.signal });
+            clearTimeout(id);
+            if (res.ok) {
+              const html = await res.text();
+              const match = html.match(/data-youtube-id="([a-zA-Z0-9_-]{11})"/) || html.match(/youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/);
+              if (match && match[1]) {
+                return saveYtCache(cacheKey, match[1]);
+              }
+            }
+          } catch (_) {}
+        }
+      } catch (e) {}
+
+      const pipedInstances = [
+        'https://pipedapi.kavin.rocks',
+        'https://pipedapi.adminforge.de',
+        'https://api.piped.projectsegfau.lt',
+        'https://pipedapi.in.projectsegfau.lt'
+      ];
+      for (const base of pipedInstances) {
+        try {
+          const ctrl = new AbortController();
+          const id = setTimeout(() => ctrl.abort(), 3500);
+          const res = await fetch(`${base}/search?q=${encodeURIComponent(query)}&filter=videos`, { signal: ctrl.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const data = await res.json();
+            const item = (data.items || []).find(i => i.url && i.url.includes('v='));
+            if (item) {
+              const vid = item.url.split('v=')[1].split('&')[0];
+              if (vid) return saveYtCache(cacheKey, vid);
+            }
+          }
+        } catch (_) {}
+      }
+
+      const invidiousInstances = [
+        'https://inv.nadeko.net',
+        'https://invidious.nerdvpn.de',
+        'https://yewtu.be'
+      ];
+      for (const base of invidiousInstances) {
+        try {
+          const ctrl = new AbortController();
+          const id = setTimeout(() => ctrl.abort(), 3500);
+          const res = await fetch(`${base}/api/v1/search?q=${encodeURIComponent(query)}&type=video`, { signal: ctrl.signal });
+          clearTimeout(id);
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data[0]?.videoId) {
+              return saveYtCache(cacheKey, data[0].videoId);
+            }
+          }
+        } catch (_) {}
+      }
+
+      return null;
+    }
+
+    function saveYtCache(key, videoId) {
+      ytCache[key] = videoId;
+      localStorage.setItem('mj_yt_cache', JSON.stringify(ytCache));
+      return videoId;
+    }
+
+    // --- Воспроизведение ---
+    async function playTrackAt(index) {
+      if (index < 0 || index >= queue.length) return;
+      currentIndex = index;
+      scrobbledCurrent = false;
+      trackStartTime = Math.floor(Date.now() / 1000);
+      const track = queue[currentIndex];
+
+      document.getElementById('player-title').textContent = track.title;
+      document.getElementById('player-artist').textContent = track.artist;
+      if (track.cover) {
+        document.getElementById('player-cover').src = track.cover;
+      }
+      renderQueue();
+      setSearchBadge(true, 'Поиск аудио...');
+
+      const videoId = await findYouTubeId(track);
+      setSearchBadge(false);
+
+      if (!videoId) {
+        showToast(`Не удалось найти аудио для "${track.artist} - ${track.title}". Пропуск...`);
+        setTimeout(() => nextTrack(), 1200);
+        return;
+      }
+
+      if (ytReady && ytPlayer) {
+        ytPlayer.loadVideoById(videoId);
+        updateNowPlaying(track);
+      } else {
+        setTimeout(() => playTrackAt(index), 500);
+      }
+    }
+
+    function togglePlay() {
+      if (!ytReady || !ytPlayer) return;
+      if (isPlaying) ytPlayer.pauseVideo();
+      else ytPlayer.playVideo();
+    }
+
+    function nextTrack() {
+      if (queue.length === 0) return;
+      const next = (currentIndex + 1) % queue.length;
+      playTrackAt(next);
+    }
+
+    function prevTrack() {
+      if (queue.length === 0) return;
+      const prev = (currentIndex - 1 + queue.length) % queue.length;
+      playTrackAt(prev);
+    }
+
+    function toggleRepeat() {
+      isRepeat = !isRepeat;
+      const btn = document.getElementById('repeat-btn');
+      btn.classList.toggle('text-[#1db954]', isRepeat);
+      btn.classList.toggle('text-neutral-400', !isRepeat);
+      showToast(isRepeat ? 'Повтор трека включен' : 'Повтор выключен');
+    }
+
+    function setVolume(val) {
+      if (ytReady && ytPlayer) ytPlayer.setVolume(val);
+    }
+
+    function toggleMute() {
+      if (!ytReady || !ytPlayer) return;
+      if (ytPlayer.isMuted()) {
+        ytPlayer.unMute();
+        document.getElementById('volume-icon').setAttribute('data-lucide', 'volume-2');
+      } else {
+        ytPlayer.mute();
+        document.getElementById('volume-icon').setAttribute('data-lucide', 'volume-x');
+      }
+      lucide.createIcons();
+    }
+
+    function toggleVideoVisibility() {
+      videoVisible = !videoVisible;
+      const wrap = document.getElementById('yt-wrapper');
+      wrap.className = videoVisible ? 'yt-visible' : 'yt-hidden';
+      const iconName = videoVisible ? 'eye' : 'eye-off';
+      document.getElementById('video-icon-desktop').setAttribute('data-lucide', iconName);
+      document.getElementById('video-icon-mobile').setAttribute('data-lucide', iconName);
+      document.getElementById('video-label').textContent = videoVisible ? 'Видео' : 'Аудио';
+      lucide.createIcons();
+    }
+
+    function seekTo(percent) {
+      if (!ytReady || !ytPlayer) return;
+      const dur = ytPlayer.getDuration();
+      if (dur > 0) ytPlayer.seekTo((percent / 100) * dur, true);
+    }
+
+    function startProgressTimer() {
+      stopProgressTimer();
+      progressInterval = setInterval(() => {
+        if (!ytReady || !ytPlayer || typeof ytPlayer.getCurrentTime !== 'function') return;
+        const cur = ytPlayer.getCurrentTime();
+        const dur = ytPlayer.getDuration();
+        if (dur > 0) {
+          document.getElementById('progress-bar').value = (cur / dur) * 100;
+          document.getElementById('time-current').textContent = formatTime(cur);
+          document.getElementById('time-total').textContent = formatTime(dur);
+
+          if (!scrobbledCurrent && (cur >= dur * 0.5 || cur >= 240)) {
+            scrobbledCurrent = true;
+            scrobbleTrack(queue[currentIndex]);
+          }
+        }
+      }, 1000);
+    }
+
+    function stopProgressTimer() {
+      if (progressInterval) clearInterval(progressInterval);
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    function updatePlayPauseIcon() {
+      const icon = document.getElementById('play-pause-icon');
+      icon.setAttribute('data-lucide', isPlaying ? 'pause' : 'play');
+      lucide.createIcons();
+    }
+
+    function setSearchBadge(show, text = '') {
+      const badge = document.getElementById('search-badge');
+      if (show) {
+        badge.classList.remove('hidden');
+        badge.classList.add('flex');
+        document.getElementById('search-badge-text').textContent = text;
+      } else {
+        badge.classList.add('hidden');
+        badge.classList.remove('flex');
+      }
+    }
+
+    // --- Скробблинг и Авторизация ---
+    async function updateNowPlaying(track) {
+      if (!config.sessionKey || !config.secret || !track) return;
+      try {
+        await lfmCall({
+          method: 'track.updateNowPlaying',
+          artist: track.artist,
+          track: track.title,
+          sk: config.sessionKey
+        }, true);
+      } catch (e) {}
+    }
+
+    async function scrobbleTrack(track) {
+      if (!config.sessionKey || !config.secret || !track) return;
+      try {
+        const res = await lfmCall({
+          method: 'track.scrobble',
+          artist: track.artist,
+          track: track.title,
+          timestamp: trackStartTime,
+          sk: config.sessionKey
+        }, true);
+        if (res.scrobbles) {
+          showToast(`Заскробблено: ${track.artist} — ${track.title}`);
+        }
+      } catch (e) {}
+    }
+
+    async function toggleLoveTrack() {
+      if (!config.sessionKey) {
+        showToast('Войдите в Last.fm для добавления в любимые');
+        return;
+      }
+      const track = queue[currentIndex];
+      if (!track) return;
+      try {
+        await lfmCall({
+          method: 'track.love',
+          artist: track.artist,
+          track: track.title,
+          sk: config.sessionKey
+        }, true);
+        document.getElementById('love-btn').classList.add('text-rose-500');
+        showToast(`Добавлено в любимые: ${track.title}`);
+      } catch (e) {
+        showToast('Ошибка при добавлении в любимые');
+      }
+    }
+
+    async function startWebAuth() {
+      if (!config.apiKey) {
+        closeAuthModal();
+        openSettingsModal();
+        showToast('Сначала укажите API Key в настройках');
+        return;
+      }
+      const res = await lfmCall({ method: 'auth.gettoken' });
+      if (res.token) {
+        pendingAuthToken = res.token;
+        window.open(`https://www.last.fm/api/auth/?api_key=${config.apiKey}&token=${pendingAuthToken}`, '_blank');
+      } else {
+        showToast('Ошибка получения токена Last.fm');
+      }
+    }
+
+    async function completeWebAuth() {
+      if (!pendingAuthToken) {
+        showToast('Сначала нажмите «1. Открыть Last.fm»');
+        return;
+      }
+      if (!config.secret) {
+        showToast('Для завершения входа укажите Shared Secret в настройках');
+        return;
+      }
+      const res = await lfmCall({ method: 'auth.getSession', token: pendingAuthToken });
+      if (res.session?.key) {
+        config.sessionKey = res.session.key;
+        config.sessionUser = res.session.name;
+        saveConfigToStorage();
+        updateAuthUI();
+        closeAuthModal();
+        showToast(`Успешный вход: ${config.sessionUser}`);
+      } else {
+        showToast('Не удалось подтвердить сессию. Убедитесь, что нажали Allow на сайте Last.fm.');
+      }
+    }
+
+    async function mobileAuth() {
+      const username = document.getElementById('lfm-login-user').value.trim();
+      const password = document.getElementById('lfm-login-pass').value.trim();
+      if (!username || !password) return;
+      const res = await lfmCall({ method: 'auth.getMobileSession', username, password }, true);
+      if (res.session?.key) {
+        config.sessionKey = res.session.key;
+        config.sessionUser = res.session.name;
+        saveConfigToStorage();
+        updateAuthUI();
+        closeAuthModal();
+        showToast(`Успешный вход: ${config.sessionUser}`);
+      } else {
+        showToast(res.message || 'Ошибка авторизации');
+      }
+    }
+
+    function logoutLastFm() {
+      config.sessionKey = '';
+      config.sessionUser = '';
+      saveConfigToStorage();
+      updateAuthUI();
+      closeAuthModal();
+      showToast('Вы вышли из аккаунта Last.fm');
+    }
+
+    function updateAuthUI() {
+      document.getElementById('display-username').textContent = config.username || 'Не задан';
+      const dot = document.getElementById('scrobble-dot');
+      const mDot = document.getElementById('mobile-dot');
+      const statusText = document.getElementById('scrobble-status-text');
+      const btn = document.getElementById('auth-btn-sidebar');
+      const mLabel = document.getElementById('mobile-auth-label');
+      const logoutBtn = document.getElementById('logout-btn');
+
+      if (config.sessionKey) {
+        dot.className = 'w-2 h-2 rounded-full bg-[#1db954]';
+        mDot.className = 'w-2 h-2 rounded-full bg-[#1db954]';
+        statusText.textContent = `Подключен аккаунт ${config.sessionUser || config.username}. Все треки автоматически скробблятся.`;
+        btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-[#1db954]"></i> Скробблинг активен`;
+        mLabel.textContent = config.sessionUser || 'Активен';
+        logoutBtn.classList.remove('hidden');
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-neutral-600';
+        mDot.className = 'w-2 h-2 rounded-full bg-neutral-500';
+        statusText.textContent = 'Авторизуйтесь, чтобы треки записывались в профиль.';
+        btn.innerHTML = `<i data-lucide="log-in" class="w-3.5 h-3.5"></i> Войти в Last.fm`;
+        mLabel.textContent = 'Войти';
+        logoutBtn.classList.add('hidden');
+      }
+      lucide.createIcons();
+    }
+
+    // --- Модальные окна ---
+    function openAuthModal() {
+      document.getElementById('lfm-login-user').value = config.username;
+      document.getElementById('auth-modal').classList.remove('hidden');
+      document.getElementById('auth-modal').classList.add('flex');
+    }
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+      document.getElementById('auth-modal').classList.remove('flex');
+    }
+
+    function openSettingsModal() {
+      document.getElementById('set-username').value = config.username;
+      document.getElementById('set-apikey').value = config.apiKey;
+      document.getElementById('set-secret').value = config.secret;
+      document.getElementById('set-ytkey').value = config.ytKey;
+      document.getElementById('settings-modal').classList.remove('hidden');
+      document.getElementById('settings-modal').classList.add('flex');
+    }
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('hidden');
+      document.getElementById('settings-modal').classList.remove('flex');
+    }
+    function saveSettings() {
+      config.username = document.getElementById('set-username').value.trim();
+      config.apiKey = document.getElementById('set-apikey').value.trim();
+      config.secret = document.getElementById('set-secret').value.trim();
+      config.ytKey = document.getElementById('set-ytkey').value.trim();
+      saveConfigToStorage();
+      updateAuthUI();
+      closeSettingsModal();
+      showToast('Настройки сохранены в память устройства');
+    }
+
+    function promptManualUrl() {
+      if (currentIndex < 0) {
+        showToast('Сначала выберите трек из списка');
+        return;
+      }
+      document.getElementById('manual-yt-input').value = '';
+      document.getElementById('manual-url-modal').classList.remove('hidden');
+      document.getElementById('manual-url-modal').classList.add('flex');
+    }
+    function closeManualUrlModal() {
+      document.getElementById('manual-url-modal').classList.add('hidden');
+      document.getElementById('manual-url-modal').classList.remove('flex');
+    }
+    function applyManualUrl() {
+      const url = document.getElementById('manual-yt-input').value.trim();
+      const match = url.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (match && match[1]) {
+        const track = queue[currentIndex];
+        const cacheKey = `${track.artist.toLowerCase()} - ${track.title.toLowerCase()}`;
+        saveYtCache(cacheKey, match[1]);
+        closeManualUrlModal();
+        playTrackAt(currentIndex);
+      } else {
+        showToast('Неверная ссылка на YouTube');
+      }
+    }
+
+    function saveConfigToStorage() {
+      localStorage.setItem('mj_player_cfg', JSON.stringify(config));
+    }
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      document.getElementById('toast-text').textContent = msg;
+      el.classList.remove('opacity-0', 'translate-y-[-10px]');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        el.classList.add('opacity-0', 'translate-y-[-10px]');
+      }, 3500);
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+  </script>
+</body>
+</html>
