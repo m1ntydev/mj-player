@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -88,12 +88,13 @@
     }
     .eq-bar:nth-child(2) { animation-delay: 0.2s; }
     .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+    .eq-bar:nth-child(4) { animation-delay: 0.1s; }
   </style>
 </head>
 <body class="flex flex-col h-screen select-none">
 
   <div id="file-warning" class="hidden bg-amber-600 text-white text-xs px-4 py-2 text-center font-medium z-50">
-    Внимание: файл открыт с диска (file://). Для работы YouTube запустите локальный сервер (http://localhost:8000) или откройте на GitHub Pages.
+    Warning: file opened from local disk (file://). Run a local server (http://localhost:8000) or open via GitHub Pages for YouTube playback.
   </div>
 
   <div class="flex flex-1 overflow-hidden">
@@ -112,7 +113,7 @@
         </div>
 
         <div>
-          <p id="txt-stations" class="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-3 px-1">Радиостанции</p>
+          <p id="txt-stations" data-i18n="stations" class="text-[11px] font-bold uppercase tracking-wider text-neutral-500 mb-3 px-1">Stations</p>
           <nav class="space-y-1">
             <button onclick="startStation('library')" id="nav-library" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-900 transition">
               <i data-lucide="library" class="w-4 h-4 text-[#1db954]"></i> <span data-i18n="lib">Play Your Library</span>
@@ -137,13 +138,13 @@
           <span id="scrobble-dot" class="w-2 h-2 rounded-full bg-neutral-600"></span>
         </div>
         <p id="scrobble-status-text" class="text-[11px] text-neutral-400 mb-2 leading-relaxed" data-i18n="wait_play">
-          Ожидание воспроизведения...
+          Waiting for playback...
         </p>
         <div class="w-full bg-neutral-800 h-1.5 rounded-full overflow-hidden mb-2.5">
           <div id="scrobble-progress" class="bg-[#1db954] h-full w-0 transition-all duration-500"></div>
         </div>
         <button id="auth-btn-sidebar" onclick="openAuthModal()" class="w-full py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-semibold transition flex items-center justify-center gap-2">
-          <i data-lucide="log-in" class="w-3.5 h-3.5"></i> <span data-i18n="login_btn">Войти в Last.fm</span>
+          <i data-lucide="log-in" class="w-3.5 h-3.5"></i> <span data-i18n="login_btn">Sign in to Last.fm</span>
         </button>
       </div>
     </aside>
@@ -157,21 +158,21 @@
             <i class="fa-brands fa-lastfm text-base"></i>
           </div>
           <span class="px-2.5 py-1 rounded-full bg-neutral-800/90 text-[11px] font-bold tracking-wider uppercase text-neutral-300 border border-neutral-700/50">
-            <span data-i18n="profile_lbl">Профиль</span>: <span id="display-username" class="text-white">Не задан</span>
+            <span data-i18n="profile_lbl">Profile</span>: <span id="display-username" class="text-white">Not set</span>
           </span>
         </div>
         <div class="flex items-center gap-2">
           <button id="auth-btn-mobile" onclick="openAuthModal()" class="md:hidden px-3 py-1.5 rounded-full bg-neutral-800 text-xs font-semibold flex items-center gap-1.5">
             <span id="mobile-dot" class="w-2 h-2 rounded-full bg-neutral-500"></span>
-            <span id="mobile-auth-label" data-i18n="login_short">Войти</span>
+            <span id="mobile-auth-label" data-i18n="login_short">Sign in</span>
           </button>
-          <button onclick="openSettingsModal()" class="p-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-white transition" title="Настройки API">
+          <button onclick="openSettingsModal()" class="p-2 rounded-full bg-neutral-800/80 hover:bg-neutral-700 text-neutral-300 hover:text-white transition" title="Settings">
             <i data-lucide="settings" class="w-4 h-4"></i>
           </button>
         </div>
       </header>
 
-      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-5" data-i18n="personal_radio">Персональное радио</h2>
+      <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-5" data-i18n="personal_radio">Personal Radio</h2>
 
       <!-- 3 Главные карточки -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 mb-8">
@@ -180,8 +181,8 @@
             <i data-lucide="play" class="w-6 h-6 fill-current"></i>
           </div>
           <div class="min-w-0">
-            <div class="font-bold text-base truncate" data-i18n="lib">Play your library</div>
-            <div class="text-xs text-neutral-400 truncate" data-i18n="lib_desc">Твои топ-треки и история</div>
+            <div class="font-bold text-base truncate" data-i18n="lib">Play Your Library</div>
+            <div class="text-xs text-neutral-400 truncate" data-i18n="lib_desc">Your top tracks & history</div>
           </div>
         </button>
 
@@ -190,8 +191,8 @@
             <i data-lucide="shuffle" class="w-6 h-6"></i>
           </div>
           <div class="min-w-0">
-            <div class="font-bold text-base truncate" data-i18n="mix">Play your mix</div>
-            <div class="text-xs text-neutral-400 truncate" data-i18n="mix_desc">50% библиотека + 50% похожее</div>
+            <div class="font-bold text-base truncate" data-i18n="mix">Play Your Mix</div>
+            <div class="text-xs text-neutral-400 truncate" data-i18n="mix_desc">50% library + 50% similar</div>
           </div>
         </button>
 
@@ -201,23 +202,23 @@
           </div>
           <div class="min-w-0">
             <div class="font-bold text-base truncate" data-i18n="recs">Recommendations</div>
-            <div class="text-xs text-neutral-400 truncate" data-i18n="recs_desc">Новые открытия по вкусу</div>
+            <div class="text-xs text-neutral-400 truncate" data-i18n="recs_desc">New music discoveries</div>
           </div>
         </button>
       </div>
 
-      <!-- Заголовок очереди (кнопки сверху убраны для минимализма) -->
+      <!-- Заголовок очереди -->
       <div class="flex items-center justify-between mb-4">
         <div class="flex items-center gap-2">
-          <h3 id="queue-title" class="text-lg font-bold" data-i18n="queue_title">Очередь воспроизведения</h3>
-          <span id="queue-count" class="px-2 py-0.5 rounded-full bg-neutral-800 text-xs text-neutral-400">0 треков</span>
+          <h3 id="queue-title" class="text-lg font-bold" data-i18n="queue_title">Playback Queue</h3>
+          <span id="queue-count" class="px-2 py-0.5 rounded-full bg-neutral-800 text-xs text-neutral-400">0 tracks</span>
         </div>
       </div>
 
       <!-- Список треков -->
       <div id="track-list" class="space-y-1">
         <div class="text-center py-12 text-neutral-500 text-sm" data-i18n="select_station_prompt">
-          Выберите одну из трех радиостанций выше, чтобы начать прослушивание.
+          Select one of the three radio stations above to start listening.
         </div>
       </div>
     </main>
@@ -227,59 +228,78 @@
   <footer class="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-neutral-800/90 px-3 md:px-6 py-2.5 md:py-3 z-30">
     <div class="max-w-screen-2xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4">
       
+      <!-- Левая часть: Обложка с оверлеем эквалайзера + Информация о треке -->
       <div class="flex items-center justify-between w-full md:w-1/3 min-w-0">
         <div class="flex items-center gap-3 min-w-0">
-          <img id="player-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E" alt="Cover" class="w-11 h-11 md:w-12 md:h-12 rounded-md bg-neutral-800 object-cover shrink-0" />
+          <div class="relative w-11 h-11 md:w-12 md:h-12 rounded-md overflow-hidden shrink-0 bg-neutral-800">
+            <img id="player-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E" alt="Cover" class="w-full h-full object-cover" />
+            <div id="cover-eq-overlay" class="hidden absolute inset-0 bg-black/55 backdrop-blur-[1px] items-center justify-center gap-0.5">
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+              <span class="eq-bar"></span>
+            </div>
+          </div>
           <div class="min-w-0">
-            <div id="player-title" class="text-sm font-semibold text-white truncate" data-i18n="not_selected">Не выбрано</div>
-            <div id="player-artist" class="text-xs text-neutral-400 truncate" data-i18n="click_station">Нажмите на радиостанцию</div>
+            <div id="player-title" class="text-sm font-semibold text-white truncate" data-i18n="not_selected">Not selected</div>
+            <div id="player-artist" class="text-xs text-neutral-400 truncate" data-i18n="click_station">Click a station to start</div>
           </div>
         </div>
         <div class="flex items-center gap-2 shrink-0">
-          <button onclick="toggleVideoVisibility()" class="md:hidden p-2 text-neutral-400 hover:text-white transition" title="Видео">
+          <button onclick="toggleVideoVisibility()" class="md:hidden p-2 text-neutral-400 hover:text-white transition" title="Video">
             <i id="video-icon-mobile" data-lucide="eye-off" class="w-4 h-4"></i>
           </button>
         </div>
       </div>
 
-      <!-- Центральная часть плеера: Управление + Сердечко ближе к таймлайну -->
+      <!-- Центральная часть: Идеально отцентрованные кнопки управления и сердечко над временем -->
       <div class="flex flex-col items-center w-full md:w-1/3">
-        <div class="flex items-center gap-5 mb-1">
-          <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Перемешать">
-            <i data-lucide="shuffle" class="w-4 h-4"></i>
-          </button>
-          <button onclick="prevTrack()" class="text-neutral-300 hover:text-white transition" title="Предыдущий">
-            <i data-lucide="skip-back" class="w-5 h-5 fill-current"></i>
-          </button>
-          <button id="play-pause-btn" onclick="togglePlay()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow">
-            <i id="play-pause-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
-          </button>
-          <button onclick="nextTrack()" class="text-neutral-300 hover:text-white transition" title="Следующий">
-            <i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i>
-          </button>
-          <button id="repeat-btn" onclick="toggleRepeat()" class="text-neutral-400 hover:text-white transition" title="Повтор трека">
-            <i data-lucide="repeat" class="w-4 h-4"></i>
-          </button>
-        </div>
-        <div class="flex items-center gap-2 w-full max-w-md">
-          <span id="time-current" class="text-[10px] text-neutral-400 w-8 text-right">0:00</span>
-          <input id="progress-bar" type="range" min="0" max="100" value="0" oninput="seekTo(this.value)" class="flex-1 h-1" />
-          <span id="time-total" class="text-[10px] text-neutral-400 w-8">0:00</span>
-          <!-- Сердечко любимого трека аккуратно рядом с таймлайном -->
-          <button id="love-btn" onclick="toggleLoveTrack()" class="p-1.5 text-neutral-400 hover:text-white transition ml-1 shrink-0" title="В любимые Last.fm">
-            <i data-lucide="heart" class="w-4 h-4"></i>
-          </button>
+        <div class="w-full max-w-md flex flex-col">
+          <!-- Верхняя строка: кнопки строго по центру, сердечко справа над цифрами времени -->
+          <div class="grid grid-cols-[1fr_auto_1fr] items-center mb-1.5">
+            <div></div>
+            <div class="flex items-center gap-5">
+              <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Shuffle">
+                <i data-lucide="shuffle" class="w-4 h-4"></i>
+              </button>
+              <button onclick="prevTrack()" class="text-neutral-300 hover:text-white transition" title="Previous">
+                <i data-lucide="skip-back" class="w-5 h-5 fill-current"></i>
+              </button>
+              <button id="play-pause-btn" onclick="togglePlay()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow">
+                <i id="play-pause-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+              </button>
+              <button onclick="nextTrack()" class="text-neutral-300 hover:text-white transition" title="Next">
+                <i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i>
+              </button>
+              <button id="repeat-btn" onclick="toggleRepeat()" class="text-neutral-400 hover:text-white transition" title="Repeat">
+                <i data-lucide="repeat" class="w-4 h-4"></i>
+              </button>
+            </div>
+            <div class="flex justify-end pr-0.5">
+              <button id="love-btn" onclick="toggleLoveTrack()" class="p-1 text-neutral-400 hover:text-white transition" title="Love track on Last.fm">
+                <i data-lucide="heart" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Нижняя строка: Таймлайн -->
+          <div class="flex items-center gap-2 w-full">
+            <span id="time-current" class="text-[10px] text-neutral-400 w-8 text-right">0:00</span>
+            <input id="progress-bar" type="range" min="0" max="100" value="0" oninput="seekTo(this.value)" class="flex-1 h-1" />
+            <span id="time-total" class="text-[10px] text-neutral-400 w-8">0:00</span>
+          </div>
         </div>
       </div>
 
+      <!-- Правая часть: Аудио/Видео + Громкость -->
       <div class="hidden md:flex items-center justify-end gap-3 w-1/3">
         <span id="search-badge" class="hidden px-2.5 py-1 rounded-full bg-neutral-800 text-[11px] text-neutral-300 items-center gap-1.5">
           <span class="w-2 h-2 rounded-full bg-[#1db954] animate-ping"></span>
-          <span id="search-badge-text" data-i18n="searching">Поиск...</span>
+          <span id="search-badge-text" data-i18n="searching">Searching...</span>
         </span>
         <button onclick="toggleVideoVisibility()" class="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs text-neutral-300 flex items-center gap-1.5 transition">
           <i id="video-icon-desktop" data-lucide="eye-off" class="w-3.5 h-3.5"></i>
-          <span id="video-label" data-i18n="audio_mode">Аудио</span>
+          <span id="video-label" data-i18n="audio_mode">Audio</span>
         </button>
         <div class="flex items-center gap-2 w-28">
           <button onclick="toggleMute()" class="text-neutral-400 hover:text-white">
@@ -300,35 +320,35 @@
   <!-- Всплывающее уведомление -->
   <div id="toast" class="fixed top-4 right-4 max-w-sm bg-neutral-900 border border-neutral-700 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-medium flex items-center gap-2.5 z-50 transition-all duration-300 opacity-0 pointer-events-none translate-y-[-10px]">
     <i data-lucide="info" class="w-4 h-4 text-[#1db954] shrink-0"></i>
-    <span id="toast-text">Уведомление</span>
+    <span id="toast-text">Notification</span>
   </div>
 
   <!-- Модальное окно авторизации Last.fm -->
   <div id="auth-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-bold" data-i18n="auth_title">Подключение Last.fm</h3>
+        <h3 class="text-lg font-bold" data-i18n="auth_title">Last.fm Connection</h3>
         <button onclick="closeAuthModal()" class="text-neutral-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       
       <div class="space-y-4 text-xs text-neutral-300">
         <div class="p-3.5 rounded-xl bg-neutral-800/70 border border-neutral-700/50">
-          <p class="font-semibold text-white mb-2" data-i18n="auth_browser_title">Способ 1: Через браузер (рекомендуется)</p>
-          <p class="text-neutral-400 mb-3" data-i18n="auth_browser_desc">Откроется официальная страница Last.fm. Нажмите «Allow access», затем вернитесь сюда и нажмите кнопку подтверждения.</p>
+          <p class="font-semibold text-white mb-2" data-i18n="auth_browser_title">Method 1: Via Browser (Recommended)</p>
+          <p class="text-neutral-400 mb-3" data-i18n="auth_browser_desc">The official Last.fm page will open. Click 'Allow access', then return here and click confirmation.</p>
           <div class="flex gap-2">
-            <button onclick="startWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#d51007] hover:bg-[#b80d06] text-white font-semibold transition" data-i18n="open_lfm">1. Открыть Last.fm</button>
-            <button onclick="completeWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-semibold transition" data-i18n="i_allowed">2. Я разрешил</button>
+            <button onclick="startWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#d51007] hover:bg-[#b80d06] text-white font-semibold transition" data-i18n="open_lfm">1. Open Last.fm</button>
+            <button onclick="completeWebAuth()" class="flex-1 py-2 px-3 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-semibold transition" data-i18n="i_allowed">2. I allowed access</button>
           </div>
         </div>
 
         <div class="p-3.5 rounded-xl bg-neutral-800/70 border border-neutral-700/50">
-          <p class="font-semibold text-white mb-2" data-i18n="auth_pass_title">Способ 2: Прямой вход по паролю</p>
-          <input id="lfm-login-user" type="text" placeholder="Логин Last.fm" class="w-full mb-2 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
-          <input id="lfm-login-pass" type="password" placeholder="Пароль" class="w-full mb-3 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
-          <button onclick="mobileAuth()" class="w-full py-2 px-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white font-semibold transition" data-i18n="login_pass_btn">Войти и получить сессию</button>
+          <p class="font-semibold text-white mb-2" data-i18n="auth_pass_title">Method 2: Direct Password Login</p>
+          <input id="lfm-login-user" type="text" placeholder="Last.fm Username" class="w-full mb-2 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
+          <input id="lfm-login-pass" type="password" placeholder="Password" class="w-full mb-3 px-3 py-2 rounded-lg bg-neutral-900 border border-neutral-700 text-white focus:outline-none focus:border-[#1db954]" />
+          <button onclick="mobileAuth()" class="w-full py-2 px-3 rounded-lg bg-neutral-700 hover:bg-neutral-600 text-white font-semibold transition" data-i18n="login_pass_btn">Sign in & Get Session</button>
         </div>
 
-        <button id="logout-btn" onclick="logoutLastFm()" class="hidden w-full py-2 text-rose-400 hover:text-rose-300 font-semibold" data-i18n="logout_btn">Отключить текущий аккаунт</button>
+        <button id="logout-btn" onclick="logoutLastFm()" class="hidden w-full py-2 text-rose-400 hover:text-rose-300 font-semibold" data-i18n="logout_btn">Disconnect Current Account</button>
       </div>
     </div>
   </div>
@@ -337,37 +357,37 @@
   <div id="settings-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
     <div class="bg-neutral-900 border border-neutral-800 rounded-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-bold" data-i18n="settings_title">Настройки доступа</h3>
+        <h3 class="text-lg font-bold" data-i18n="settings_title">Settings & Access</h3>
         <button onclick="closeSettingsModal()" class="text-neutral-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <p class="text-[11px] text-neutral-400 mb-4 leading-relaxed" data-i18n="settings_desc">
-        Ключи сохраняются исключительно в локальной памяти (localStorage) вашего устройства и не передаются третьим лицам.
+        Keys are stored exclusively in your device's local memory (localStorage) and are never shared.
       </p>
       <div class="space-y-3 text-xs">
         <div>
-          <label class="block text-neutral-400 mb-1" data-i18n="set_user_lbl">Пользователь Last.fm</label>
-          <input id="set-username" type="text" placeholder="Например: artesDj" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+          <label class="block text-neutral-400 mb-1" data-i18n="set_user_lbl">Last.fm Username</label>
+          <input id="set-username" type="text" placeholder="e.g. artesDj" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
         </div>
         <div>
           <label class="block text-neutral-400 mb-1">Last.fm API Key <span class="text-rose-400">*</span></label>
-          <input id="set-apikey" type="password" placeholder="Вставьте ваш API Key" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+          <input id="set-apikey" type="password" placeholder="Enter your API Key" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
         </div>
         <div>
-          <label class="block text-neutral-400 mb-1" data-i18n="set_secret_lbl">Last.fm Shared Secret (для скробблинга)</label>
-          <input id="set-secret" type="password" placeholder="Вставьте ваш Shared Secret" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
+          <label class="block text-neutral-400 mb-1" data-i18n="set_secret_lbl">Last.fm Shared Secret (for scrobbling)</label>
+          <input id="set-secret" type="password" placeholder="Enter your Shared Secret" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
         </div>
         <div>
-          <label class="block text-neutral-400 mb-1">YouTube Data API v3 Key (опционально)</label>
+          <label class="block text-neutral-400 mb-1">YouTube Data API v3 Key (optional)</label>
           <input id="set-ytkey" type="password" placeholder="AIzaSy..." class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white" />
         </div>
         <div>
-          <label class="block text-neutral-400 mb-1" data-i18n="lang_lbl">Язык интерфейса / Language</label>
+          <label class="block text-neutral-400 mb-1" data-i18n="lang_lbl">Interface Language</label>
           <select id="set-lang" class="w-full px-3 py-2 rounded-lg bg-neutral-800 border border-neutral-700 text-white">
-            <option value="ru">Русский</option>
             <option value="en">English</option>
+            <option value="ru">Русский</option>
           </select>
         </div>
-        <button onclick="saveSettings()" class="w-full mt-2 py-2.5 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-bold transition" data-i18n="save_btn">Сохранить в память устройства</button>
+        <button onclick="saveSettings()" class="w-full mt-2 py-2.5 rounded-lg bg-[#1db954] hover:bg-[#1ed760] text-black font-bold transition" data-i18n="save_btn">Save to Device</button>
       </div>
     </div>
   </div>
@@ -381,61 +401,8 @@
       document.getElementById('file-warning').classList.remove('hidden');
     }
 
-    // --- Словари локализации (Русский / English) ---
+    // --- Словари локализации (English / Русский) ---
     const i18n = {
-      ru: {
-        stations: "Радиостанции",
-        lib: "Play Your Library",
-        lib_desc: "Твои топ-треки и история",
-        mix: "Play Your Mix",
-        mix_desc: "50% библиотека + 50% похожее",
-        recs: "Recommendations",
-        recs_desc: "Новые открытия по вкусу",
-        scrobble_ready: "Scrobble Ready",
-        scrobble_active: "Scrobble Active",
-        wait_play: "Ожидание воспроизведения...",
-        login_btn: "Войти в Last.fm",
-        profile_lbl: "Профиль",
-        login_short: "Войти",
-        personal_radio: "Персональное радио",
-        queue_title: "Очередь воспроизведения",
-        select_station_prompt: "Выберите одну из трех радиостанций выше, чтобы начать прослушивание.",
-        not_selected: "Не выбрано",
-        click_station: "Нажмите на радиостанцию",
-        searching: "Поиск...",
-        audio_mode: "Аудио",
-        auth_title: "Подключение Last.fm",
-        auth_browser_title: "Способ 1: Через браузер (рекомендуется)",
-        auth_browser_desc: "Откроется официальная страница Last.fm. Нажмите «Allow access», затем вернитесь сюда и нажмите кнопку подтверждения.",
-        open_lfm: "1. Открыть Last.fm",
-        i_allowed: "2. Я разрешил",
-        auth_pass_title: "Способ 2: Прямой вход по паролю",
-        login_pass_btn: "Войти и получить сессию",
-        logout_btn: "Отключить текущий аккаунт",
-        settings_title: "Настройки доступа",
-        settings_desc: "Ключи сохраняются исключительно в локальной памяти (localStorage) вашего устройства и не передаются третьим лицам.",
-        set_user_lbl: "Пользователь Last.fm",
-        set_secret_lbl: "Last.fm Shared Secret (для скробблинга)",
-        lang_lbl: "Язык интерфейса / Language",
-        save_btn: "Сохранить в память устройства",
-        tracks_count: "треков",
-        collecting: "Собираем треки из Last.fm...",
-        loading_err: "Не удалось загрузить треки. Проверьте имя пользователя и API Key.",
-        api_err: "Ошибка при обращении к Last.fm API.",
-        shuffled: "Очередь перемешана",
-        repeat_on: "Повтор трека включен",
-        repeat_off: "Повтор выключен",
-        geo_err: "Видео ограничено для встраивания. Пропуск трека...",
-        play_err: "Ошибка воспроизведения. Переключаю дальше...",
-        not_found: "Не удалось найти аудио для",
-        skipping: "Пропуск...",
-        scrobbled_msg: "Заскробблено",
-        love_added: "Добавлено в любимые",
-        settings_toast: "Введите ваш логин и API Key Last.fm для начала работы",
-        saved_toast: "Настройки сохранены в память устройства",
-        logout_toast: "Вы вышли из аккаунта Last.fm",
-        active_scrobble_txt: "Скробблинг активен"
-      },
       en: {
         stations: "Stations",
         lib: "Play Your Library",
@@ -488,10 +455,63 @@
         saved_toast: "Settings saved to device memory",
         logout_toast: "Logged out from Last.fm",
         active_scrobble_txt: "Scrobbling active"
+      },
+      ru: {
+        stations: "Радиостанции",
+        lib: "Play Your Library",
+        lib_desc: "Твои топ-треки и история",
+        mix: "Play Your Mix",
+        mix_desc: "50% библиотека + 50% похожее",
+        recs: "Recommendations",
+        recs_desc: "Новые открытия по вкусу",
+        scrobble_ready: "Scrobble Ready",
+        scrobble_active: "Scrobble Active",
+        wait_play: "Ожидание воспроизведения...",
+        login_btn: "Войти в Last.fm",
+        profile_lbl: "Профиль",
+        login_short: "Войти",
+        personal_radio: "Персональное радио",
+        queue_title: "Очередь воспроизведения",
+        select_station_prompt: "Выберите одну из трех радиостанций выше, чтобы начать прослушивание.",
+        not_selected: "Не выбрано",
+        click_station: "Нажмите на радиостанцию",
+        searching: "Поиск...",
+        audio_mode: "Аудио",
+        auth_title: "Подключение Last.fm",
+        auth_browser_title: "Способ 1: Через браузер (рекомендуется)",
+        auth_browser_desc: "Откроется официальная страница Last.fm. Нажмите «Allow access», затем вернитесь сюда и нажмите кнопку подтверждения.",
+        open_lfm: "1. Открыть Last.fm",
+        i_allowed: "2. Я разрешил",
+        auth_pass_title: "Способ 2: Прямой вход по паролю",
+        login_pass_btn: "Войти и получить сессию",
+        logout_btn: "Отключить текущий аккаунт",
+        settings_title: "Настройки доступа",
+        settings_desc: "Ключи сохраняются исключительно в локальной памяти (localStorage) вашего устройства и не передаются третьим лицам.",
+        set_user_lbl: "Пользователь Last.fm",
+        set_secret_lbl: "Last.fm Shared Secret (для скробблинга)",
+        lang_lbl: "Язык интерфейса / Language",
+        save_btn: "Сохранить в память устройства",
+        tracks_count: "треков",
+        collecting: "Собираем треки из Last.fm...",
+        loading_err: "Не удалось загрузить треки. Проверьте имя пользователя и API Key.",
+        api_err: "Ошибка при обращении к Last.fm API.",
+        shuffled: "Очередь перемешана",
+        repeat_on: "Повтор трека включен",
+        repeat_off: "Повтор выключен",
+        geo_err: "Видео ограничено для встраивания. Пропуск трека...",
+        play_err: "Ошибка воспроизведения. Переключаю дальше...",
+        not_found: "Не удалось найти аудио для",
+        skipping: "Пропуск...",
+        scrobbled_msg: "Заскробблено",
+        love_added: "Добавлено в любимые",
+        settings_toast: "Введите ваш логин и API Key Last.fm для начала работы",
+        saved_toast: "Настройки сохранены в память устройства",
+        logout_toast: "Вы вышли из аккаунта Last.fm",
+        active_scrobble_txt: "Скробблинг активен"
       }
     };
 
-    // --- Конфигурация ---
+    // --- Конфигурация (по умолчанию английский язык) ---
     const DEFAULT_CONFIG = {
       username: '',
       apiKey: '',
@@ -499,7 +519,7 @@
       ytKey: '',
       sessionKey: '',
       sessionUser: '',
-      lang: 'ru'
+      lang: 'en'
     };
 
     let config = { ...DEFAULT_CONFIG, ...JSON.parse(localStorage.getItem('mj_player_cfg') || '{}') };
@@ -527,11 +547,33 @@
       }, 400);
     }
 
+    // --- Горячие клавиши для десктопа ---
+    document.addEventListener('keydown', (e) => {
+      // Игнорируем нажатия, если фокус внутри поля ввода
+      const activeTag = document.activeElement?.tagName;
+      if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        nextTrack();
+      } else if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        prevTrack();
+      } else if (e.code === 'KeyM') {
+        e.preventDefault();
+        toggleMute();
+      }
+    });
+
     function t(key) {
-      return i18n[config.lang]?.[key] || i18n['ru'][key] || key;
+      return i18n[config.lang]?.[key] || i18n['en'][key] || key;
     }
 
     function applyLocalization() {
+      document.documentElement.lang = config.lang;
       document.querySelectorAll('[data-i18n]').forEach(el => {
         const k = el.getAttribute('data-i18n');
         if (i18n[config.lang][k]) {
@@ -584,15 +626,28 @@
     };
 
     function onPlayerStateChange(event) {
+      const coverOverlay = document.getElementById('cover-eq-overlay');
       if (event.data === YT.PlayerState.PLAYING) {
         isPlaying = true;
         updatePlayPauseIcon();
         startProgressTimer();
+        if (coverOverlay) {
+          coverOverlay.classList.remove('hidden');
+          coverOverlay.classList.add('flex');
+        }
       } else if (event.data === YT.PlayerState.PAUSED) {
         isPlaying = false;
         updatePlayPauseIcon();
         stopProgressTimer();
+        if (coverOverlay) {
+          coverOverlay.classList.add('hidden');
+          coverOverlay.classList.remove('flex');
+        }
       } else if (event.data === YT.PlayerState.ENDED) {
+        if (coverOverlay) {
+          coverOverlay.classList.add('hidden');
+          coverOverlay.classList.remove('flex');
+        }
         if (isRepeat) {
           ytPlayer.seekTo(0);
           ytPlayer.playVideo();
@@ -942,6 +997,7 @@
 
       document.getElementById('player-title').textContent = track.title;
       document.getElementById('player-artist').textContent = track.artist;
+      document.getElementById('love-btn').classList.remove('text-rose-500');
       
       if (track.cover && !track.cover.includes('2a96cbd8b46e442fc41c2b86b821562f')) {
         document.getElementById('player-cover').src = track.cover;
