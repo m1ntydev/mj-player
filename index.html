@@ -127,15 +127,21 @@
         </div>
       </div>
 
-      <!-- Статус скробблера -->
+      <!-- Статус скробблера (вернули компактный статус с процентами) -->
       <div class="bg-neutral-900/80 p-3.5 rounded-xl border border-neutral-800 mt-6 shrink-0">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-xs font-semibold text-neutral-300">Last.fm Scrobbler</span>
+          <div class="flex items-center gap-1.5">
+            <i class="fa-brands fa-lastfm text-[#d51007] text-sm"></i>
+            <span id="scrobble-status-badge" class="text-xs font-semibold text-neutral-300">Scrobble Ready</span>
+          </div>
           <span id="scrobble-dot" class="w-2 h-2 rounded-full bg-neutral-600"></span>
         </div>
-        <p id="scrobble-status-text" class="text-[11px] text-neutral-400 mb-3 leading-relaxed">
-          Авторизуйтесь, чтобы треки записывались в профиль.
+        <p id="scrobble-status-text" class="text-[11px] text-neutral-400 mb-2 leading-relaxed">
+          Ожидание воспроизведения...
         </p>
+        <div class="w-full bg-neutral-800 h-1.5 rounded-full overflow-hidden mb-2.5">
+          <div id="scrobble-progress" class="bg-[#1db954] h-full w-0 transition-all duration-500"></div>
+        </div>
         <button id="auth-btn-sidebar" onclick="openAuthModal()" class="w-full py-2 px-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-xs font-semibold transition flex items-center justify-center gap-2">
           <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Войти в Last.fm
         </button>
@@ -231,7 +237,7 @@
       
       <div class="flex items-center justify-between w-full md:w-1/3 min-w-0">
         <div class="flex items-center gap-3 min-w-0">
-          <img id="player-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E" alt="Cover" class="w-11 h-11 md:w-12 md:h-12 rounded-md bg-neutral-800 object-cover shrink-0" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'48\' height=\'48\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'%23525252\' stroke-width=\'2\'%3E%3Crect width=\'18\' height=\'18\' x=\'3\' y=\'3\' rx=\'2\'/%3E%3Ccircle cx=\'12\' cy=\'12\' r=\'3\'/%3E%3C/svg%3E'" />
+          <img id="player-cover" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E" alt="Cover" class="w-11 h-11 md:w-12 md:h-12 rounded-md bg-neutral-800 object-cover shrink-0" />
           <div class="min-w-0">
             <div id="player-title" class="text-sm font-semibold text-white truncate">Не выбрано</div>
             <div id="player-artist" class="text-xs text-neutral-400 truncate">Нажмите на радиостанцию</div>
@@ -620,11 +626,17 @@
     function normalizeTrack(t) {
       const artist = typeof t.artist === 'string' ? t.artist : (t.artist?.name || t.artist?.['#text'] || 'Unknown');
       const images = t.image || [];
-      const imgObj = images.find(i => i.size === 'large') || images.find(i => i.size === 'medium') || images[images.length - 1];
-      let cover = imgObj ? imgObj['#text'] : '';
+      // Универсальный поиск картинки в разных форматах ответов Last.fm
+      const imgObj = images.find(i => i.size === 'large') || images.find(i => i.size === 'medium') || images.find(i => i.size === 'extralarge') || images[images.length - 1];
+      let cover = '';
+      if (typeof imgObj === 'string') {
+        cover = imgObj;
+      } else if (imgObj && (imgObj['#text'] || imgObj.url)) {
+        cover = imgObj['#text'] || imgObj.url;
+      }
       if (cover && cover.includes('2a96cbd8b46e442fc41c2b86b821562f')) cover = '';
       return {
-        title: t.name,
+        title: t.name || t.title,
         artist: artist,
         cover: cover,
         url: t.url || ''
@@ -634,6 +646,7 @@
     function deduplicateTracks(list) {
       const seen = new Set();
       return list.filter(t => {
+        if (!t.title || !t.artist) return false;
         const key = `${t.artist.toLowerCase()}-${t.title.toLowerCase()}`;
         if (seen.has(key)) return false;
         seen.add(key);
@@ -789,6 +802,8 @@
       document.getElementById('player-artist').textContent = track.artist;
       if (track.cover) {
         document.getElementById('player-cover').src = track.cover;
+      } else {
+        document.getElementById('player-cover').src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%23525252' stroke-width='2'%3E%3Crect width='18' height='18' x='3' y='3' rx='2'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E";
       }
       renderQueue();
       setSearchBadge(true, 'Поиск аудио...');
@@ -880,6 +895,20 @@
           document.getElementById('time-current').textContent = formatTime(cur);
           document.getElementById('time-total').textContent = formatTime(dur);
 
+          // Обновление прогресс-бара скробблинга в сайдбаре
+          const pct = Math.min(100, Math.floor((cur / (dur > 0 ? dur : 180)) * 100));
+          const progEl = document.getElementById('scrobble-progress');
+          const statText = document.getElementById('scrobble-status-text');
+          if (progEl) progEl.style.width = `${pct}%`;
+
+          if (config.sessionKey) {
+            if (!scrobbledCurrent) {
+              statText.textContent = `Scrobbling... (${pct}%)`;
+            }
+          } else {
+            statText.textContent = `Воспроизведение (${pct}%)`;
+          }
+
           if (!scrobbledCurrent && (cur >= dur * 0.5 || cur >= 240)) {
             scrobbledCurrent = true;
             scrobbleTrack(queue[currentIndex]);
@@ -940,6 +969,8 @@
           sk: config.sessionKey
         }, true);
         if (res.scrobbles) {
+          document.getElementById('scrobble-status-badge').textContent = 'Scrobbled ✓';
+          document.getElementById('scrobble-status-text').textContent = `Заскробблено: ${track.artist} — ${track.title}`;
           showToast(`Заскробблено: ${track.artist} — ${track.title}`);
         }
       } catch (e) {}
@@ -976,7 +1007,15 @@
       const res = await lfmCall({ method: 'auth.gettoken' });
       if (res.token) {
         pendingAuthToken = res.token;
-        window.open(`https://www.last.fm/api/auth/?api_key=${config.apiKey}&token=${pendingAuthToken}`, '_blank');
+        // Открытие ссылки в системном браузере по умолчанию
+        const authUrl = `https://www.last.fm/api/auth/?api_key=${config.apiKey}&token=${pendingAuthToken}`;
+        const a = document.createElement('a');
+        a.href = authUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
       } else {
         showToast('Ошибка получения токена Last.fm');
       }
@@ -1034,6 +1073,7 @@
       document.getElementById('display-username').textContent = config.username || 'Не задан';
       const dot = document.getElementById('scrobble-dot');
       const mDot = document.getElementById('mobile-dot');
+      const badge = document.getElementById('scrobble-status-badge');
       const statusText = document.getElementById('scrobble-status-text');
       const btn = document.getElementById('auth-btn-sidebar');
       const mLabel = document.getElementById('mobile-auth-label');
@@ -1042,14 +1082,16 @@
       if (config.sessionKey) {
         dot.className = 'w-2 h-2 rounded-full bg-[#1db954]';
         mDot.className = 'w-2 h-2 rounded-full bg-[#1db954]';
-        statusText.textContent = `Подключен аккаунт ${config.sessionUser || config.username}. Все треки автоматически скробблятся.`;
+        badge.textContent = 'Scrobble Active';
+        statusText.textContent = `Аккаунт ${config.sessionUser || config.username} подключен.`;
         btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-[#1db954]"></i> Скробблинг активен`;
         mLabel.textContent = config.sessionUser || 'Активен';
         logoutBtn.classList.remove('hidden');
       } else {
         dot.className = 'w-2 h-2 rounded-full bg-neutral-600';
         mDot.className = 'w-2 h-2 rounded-full bg-neutral-500';
-        statusText.textContent = 'Авторизуйтесь, чтобы треки записывались в профиль.';
+        badge.textContent = 'Scrobble Ready';
+        statusText.textContent = 'Авторизуйтесь для записи треков.';
         btn.innerHTML = `<i data-lucide="log-in" class="w-3.5 h-3.5"></i> Войти в Last.fm`;
         mLabel.textContent = 'Войти';
         logoutBtn.classList.add('hidden');
