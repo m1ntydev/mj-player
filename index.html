@@ -252,12 +252,11 @@
         </div>
       </div>
 
-      <!-- Центральная часть: Идеально отцентрованные кнопки управления и сердечко над временем -->
+      <!-- Центральная часть: Кнопки управления + Сердечко рядом с ними -->
       <div class="flex flex-col items-center w-full md:w-1/3">
         <div class="w-full max-w-md flex flex-col">
-          <!-- Верхняя строка: кнопки строго по центру, сердечко справа над цифрами времени -->
-          <div class="grid grid-cols-[1fr_auto_1fr] items-center mb-1.5">
-            <div></div>
+          <!-- Верхняя строка: кнопки по центру, а сердечко аккуратно справа от кнопки повтора -->
+          <div class="flex items-center justify-center gap-4 mb-1.5 relative">
             <div class="flex items-center gap-5">
               <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Shuffle">
                 <i data-lucide="shuffle" class="w-4 h-4"></i>
@@ -275,11 +274,10 @@
                 <i data-lucide="repeat" class="w-4 h-4"></i>
               </button>
             </div>
-            <div class="flex justify-end pr-0.5">
-              <button id="love-btn" onclick="toggleLoveTrack()" class="p-1 text-neutral-400 hover:text-white transition" title="Love track on Last.fm">
-                <i data-lucide="heart" class="w-4 h-4"></i>
-              </button>
-            </div>
+            <!-- Сердечко встроено в ряд управления сразу за кнопкой повтора -->
+            <button id="love-btn" onclick="toggleLoveTrack()" class="p-1.5 text-neutral-400 hover:text-white transition ml-3 md:absolute md:right-0" title="Love track on Last.fm">
+              <i data-lucide="heart" class="w-4 h-4"></i>
+            </button>
           </div>
 
           <!-- Нижняя строка: Таймлайн -->
@@ -401,7 +399,6 @@
       document.getElementById('file-warning').classList.remove('hidden');
     }
 
-    // --- Словари локализации (English / Русский) ---
     const i18n = {
       en: {
         stations: "Stations",
@@ -511,7 +508,6 @@
       }
     };
 
-    // --- Конфигурация (по умолчанию английский язык) ---
     const DEFAULT_CONFIG = {
       username: '',
       apiKey: '',
@@ -547,9 +543,7 @@
       }, 400);
     }
 
-    // --- Горячие клавиши для десктопа ---
     document.addEventListener('keydown', (e) => {
-      // Игнорируем нажатия, если фокус внутри поля ввода
       const activeTag = document.activeElement?.tagName;
       if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
 
@@ -584,7 +578,6 @@
       updateAuthUI();
     }
 
-    // --- YouTube IFrame API ---
     const tag = document.createElement('script');
     tag.src = "https://www.youtube.com/iframe_api";
     document.head.appendChild(tag);
@@ -657,7 +650,6 @@
       }
     }
 
-    // --- Last.fm API Helper ---
     async function lfmCall(params, isPost = false) {
       if (!config.apiKey) {
         openSettingsModal();
@@ -693,7 +685,6 @@
       }
     }
 
-    // --- Генерация станций ---
     async function startStation(type) {
       if (!config.apiKey || !config.username) {
         openSettingsModal();
@@ -867,7 +858,6 @@
       lucide.createIcons();
     }
 
-    // --- Автоматическая подгрузка обложки ---
     async function fetchTrackCover(track, videoId) {
       if (track.cover && !track.cover.includes('2a96cbd8b46e442fc41c2b86b821562f')) return track.cover;
 
@@ -895,7 +885,6 @@
       return '';
     }
 
-    // --- Поиск YouTube ID ---
     async function findYouTubeId(track) {
       const cacheKey = `${track.artist.toLowerCase()} - ${track.title.toLowerCase()}`;
       if (ytCache[cacheKey]) return ytCache[cacheKey];
@@ -987,7 +976,6 @@
       return videoId;
     }
 
-    // --- Воспроизведение ---
     async function playTrackAt(index) {
       if (index < 0 || index >= queue.length) return;
       currentIndex = index;
@@ -1150,7 +1138,6 @@
       }
     }
 
-    // --- Скробблинг и Авторизация ---
     async function updateNowPlaying(track) {
       if (!config.sessionKey || !config.secret || !track) return;
       try {
