@@ -252,32 +252,30 @@
         </div>
       </div>
 
-      <!-- Центральная часть: Кнопки управления + Сердечко сразу после кнопки перемешивания -->
+      <!-- Центральная часть: Кнопки управления + Сердечко сразу после кнопки repeat в едином ряду -->
       <div class="flex flex-col items-center w-full md:w-1/3">
         <div class="w-full max-w-md flex flex-col">
-          <!-- Верхняя строка: кнопки по центру, а сердечко аккуратно между Shuffle и Skip-Back -->
-          <div class="flex items-center justify-center gap-4 mb-1.5">
-            <div class="flex items-center gap-5">
-              <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Shuffle">
-                <i data-lucide="shuffle" class="w-4 h-4"></i>
-              </button>
-              <!-- Сердечко встроено сразу после Shuffle -->
-              <button id="love-btn" onclick="toggleLoveTrack()" class="p-1.5 text-neutral-400 hover:text-white transition" title="Love track on Last.fm">
-                <i data-lucide="heart" class="w-4 h-4"></i>
-              </button>
-              <button onclick="prevTrack()" class="text-neutral-300 hover:text-white transition" title="Previous">
-                <i data-lucide="skip-back" class="w-5 h-5 fill-current"></i>
-              </button>
-              <button id="play-pause-btn" onclick="togglePlay()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow">
-                <i id="play-pause-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
-              </button>
-              <button onclick="nextTrack()" class="text-neutral-300 hover:text-white transition" title="Next">
-                <i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i>
-              </button>
-              <button id="repeat-btn" onclick="toggleRepeat()" class="text-neutral-400 hover:text-white transition" title="Repeat">
-                <i data-lucide="repeat" class="w-4 h-4"></i>
-              </button>
-            </div>
+          <!-- Верхняя строка: Кнопки и сердечко строго по центру без абсолютного позиционирования -->
+          <div class="flex items-center justify-center gap-4 md:gap-5 mb-1.5">
+            <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Shuffle">
+              <i data-lucide="shuffle" class="w-4 h-4"></i>
+            </button>
+            <button onclick="prevTrack()" class="text-neutral-300 hover:text-white transition" title="Previous">
+              <i data-lucide="skip-back" class="w-5 h-5 fill-current"></i>
+            </button>
+            <button id="play-pause-btn" onclick="togglePlay()" class="w-9 h-9 md:w-10 md:h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition shadow">
+              <i id="play-pause-icon" data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
+            </button>
+            <button onclick="nextTrack()" class="text-neutral-300 hover:text-white transition" title="Next">
+              <i data-lucide="skip-forward" class="w-5 h-5 fill-current"></i>
+            </button>
+            <button id="repeat-btn" onclick="toggleRepeat()" class="text-neutral-400 hover:text-white transition" title="Repeat">
+              <i data-lucide="repeat" class="w-4 h-4"></i>
+            </button>
+            <!-- Сердечко расположено сразу после repeat в общей группе -->
+            <button id="love-btn" onclick="toggleLoveTrack()" class="p-1 text-neutral-400 hover:text-white transition ml-1" title="Love track on Last.fm">
+              <i data-lucide="heart" class="w-4 h-4"></i>
+            </button>
           </div>
 
           <!-- Нижняя строка: Таймлайн -->
