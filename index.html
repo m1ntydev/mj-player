@@ -141,7 +141,7 @@
     </aside>
 
     <!-- Главная область -->
-    <main class="flex-1 overflow-y-auto bg-gradient-to-b from-neutral-900 via-[#121212] to-[#121212] p-4 md:p-8 pb-32">
+    <main class="flex-1 overflow-y-auto bg-gradient-to-b from-neutral-900 via-[#121212] to-[#121212] p-4 md:p-8 pb-32" id="main-container">
       
       <header class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-2.5">
@@ -523,16 +523,28 @@
         return;
       }
 
+      // Динамическое обновление цветов в зависимости от станции
       ['library', 'mix', 'recs'].forEach(t => {
         const card = document.getElementById(`card-${t}`);
         const nav = document.getElementById(`nav-${t}`);
-        if (card) card.classList.remove('ring-2', 'ring-[#1db954]');
+        if (card) card.classList.remove('ring-2', 'ring-[#1db954]', 'ring-purple-600', 'ring-rose-600');
         if (nav) nav.classList.remove('bg-neutral-900', 'text-white');
       });
+
       const activeCard = document.getElementById(`card-${type}`);
       const activeNav = document.getElementById(`nav-${type}`);
-      if (activeCard) activeCard.classList.add('ring-2', 'ring-[#1db954]');
+      const mainContainer = document.getElementById('main-container');
+
+      const ringColors = { library: 'ring-[#1db954]', mix: 'ring-purple-600', recs: 'ring-rose-600' };
+      const gradientColors = { 
+        library: 'bg-gradient-to-b from-emerald-900/45 via-[#121212] to-[#121212]', 
+        mix: 'bg-gradient-to-b from-purple-900/45 via-[#121212] to-[#121212]', 
+        recs: 'bg-gradient-to-b from-rose-900/45 via-[#121212] to-[#121212]' 
+      };
+
+      if (activeCard) activeCard.classList.add('ring-2', ringColors[type]);
       if (activeNav) activeNav.classList.add('bg-neutral-900', 'text-white');
+      if (mainContainer) mainContainer.className = `flex-1 overflow-y-auto ${gradientColors[type]} p-4 md:p-8 pb-32`;
 
       const titles = {
         library: `Library Radio • ${config.username}`,
