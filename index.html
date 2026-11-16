@@ -65,15 +65,22 @@
     }
     .yt-visible {
       position: fixed;
-      bottom: 100px;
+      bottom: 148px;
       right: 16px;
-      width: 280px;
-      height: 158px;
+      width: 240px;
+      height: 135px;
       z-index: 40;
       border-radius: 12px;
       overflow: hidden;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.8);
       border: 1px solid #282828;
+    }
+    @media (min-width: 768px) {
+      .yt-visible {
+        bottom: 100px;
+        width: 280px;
+        height: 158px;
+      }
     }
 
     @keyframes pulse-eq {
@@ -252,10 +259,10 @@
         </div>
       </div>
 
-      <!-- Центральная часть: Идеально отцентрованный блок управления с небольшим компенсационным смещением вправо -->
+      <!-- Центральная часть: Идеально отцентрованный блок управления -->
       <div class="flex flex-col items-center w-full md:w-1/3">
         <div class="w-full max-w-md flex flex-col">
-          <!-- Верхняя строка: Кнопки управления (добавлен небольшой отступ слева pl-5 для компенсации сердечка на конце) -->
+          <!-- Верхняя строка: Кнопки управления с компенсационным отступом слева pl-5 -->
           <div class="flex items-center justify-center gap-4 md:gap-5 mb-1.5 pl-5">
             <button onclick="shuffleQueue()" class="text-neutral-400 hover:text-white transition" title="Shuffle">
               <i data-lucide="shuffle" class="w-4 h-4"></i>
@@ -491,7 +498,7 @@
         api_err: "Ошибка при обращении к Last.fm API.",
         shuffled: "Очередь перемешана",
         repeat_on: "Повтор трека включен",
-        repeat_off: "Repeat выключен",
+        repeat_off: "Повтор выключен",
         geo_err: "Видео ограничено для встраивания. Пропуск трека...",
         play_err: "Ошибка воспроизведения. Переключаю дальше...",
         not_found: "Не удалось найти аудио для",
